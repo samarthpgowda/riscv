@@ -1,0 +1,71 @@
+Features
+
+Implements Core RISC-V I-Type Instructions:
+Supports fundamental I-type and memory instructions including ADDI, ANDI, ORI, XORI, LW and SW enabling basic computation, logic operations, and memory access.
+
+Modular Design:
+The processor is designed in a modular architecture with dedicated modules for Program Counter, Instruction Memory, Register File, Immediate Generator, Control Unit, ALU, Data Memory, and Multiplexers.
+
+FSM-Based Synchronous Memory Initialization:
+Both instruction memory and data memory use FSM-based initialization and operate synchronously with the clock, improving timing predictability and simulation clarity.
+
+Single-Cycle Datapath:
+Executes each instruction in a single clock cycle, making it easier to understand and verify fundamental RISC-V operations.
+Structured hierarchy and signal outputs (pc, instruction, alu_out, register data, memory data) make it simple to trace and debug instruction execution.
+
+🔹 Module Descriptions
+Program Counter (PC):
+The Program Counter is a 32-bit register that holds the address of the current instruction being executed.
+On every positive clock edge, the PC updates to either PC + 4 (sequential execution) or a branch target address when a branch is taken.
+The increment of 4 corresponds to the fixed 32-bit instruction width in RISC-V (4 bytes per instruction).
+It includes synchronous reset logic to initialize the PC to 0 at startup.
+
+PC Adder (Adder for PC):
+A dedicated 32-bit adder computes the next sequential address: PC + 4.
+The +4 increment ensures the processor fetches the next aligned instruction since RISC-V instructions are all word-aligned (4-byte aligned).
+Another adder is used for branch calculations: PC + Immediate, supporting branch instructions like BEQ.
+
+Instruction Memory (FSM-Based):
+A 32-bit wide memory array that stores program instructions.
+Instructions are preloaded at simulation start and accessed synchronously (read on positive clock edge).
+The FSM initializes all memory locations to 0 and then loads the first few instructions into consecutive memory locations.
+This design improves simulation clarity and mimics realistic memory initialization in hardware.
+
+Register File:
+A 32×32-bit register file (32 registers, each 32 bits wide).
+Supports two combinational read ports and a single synchronous write port (writes on positive clock edge).
+Includes synchronous reset logic to clear all registers to 0.
+Register x0 is hardwired to 0, as per the RISC-V specification.
+
+Immediate Generator:
+Decodes the 32-bit instruction and extracts sign-extended immediate values for I-type, S-type, and B-type instructions.
+For I-type, bits [31:20] are sign-extended to 32 bits.
+This allows arithmetic, memory, and branch instructions to operate correctly with signed immediate operands.
+
+Control Unit:
+Decodes the opcode and generates control signals for the ALU, memory, and register file.
+Supports I-type operations (ADDI, ANDI, ORI, XORI), memory access (LW, SW), and branching (BEQ).
+Simplified design for single-cycle execution; no pipeline hazards or multi-cycle controls are implemented.
+
+ALU (Arithmetic Logic Unit):
+A 32-bit ALU supporting basic operations: ADD, AND, OR, XOR.
+Takes operands from the register file and the immediate generator.
+Output is used for arithmetic computation, logical operations, memory addressing, and branch decision-making.
+
+ALU Control:
+Decodes funct3 (and funct7 if needed) fields from the instruction to select the correct ALU operation.
+Generates operation codes for ADD, AND, OR, and XOR specifically for I-type instructions.
+
+Data Memory (FSM-Based):
+A 32-bit wide synchronous memory array for load (LW) and store (SW) instructions.
+FSM-based initialization clears all memory locations at reset.
+Data read and write operations are synchronous, mimicking real-world SRAM behavior.
+
+Multiplexers:
+Various multiplexers are used in the datapath:
+
+PC MUX: Selects between PC+4 and branch target address.
+
+Write-back MUX: Selects between ALU result and memory data for register writes.
+
+Parameterized width (32-bit) for flexible datapath design.
